@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>for you</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; overflow-x:hidden; overflow-y:auto;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, #ffd9e9 0 9%, transparent 25%),
+      radial-gradient(circle at 85% 75%, #dfd5ff 0 10%, transparent 27%),
+      linear-gradient(135deg,#fff7fb,#f9f4ff 50%,#f3fbff);
+    color:#59465e; display:grid; place-items:center;
+  }
+  .blob{position:fixed;border-radius:50%;filter:blur(2px);opacity:.35;pointer-events:none}
+  .b1{width:170px;height:170px;background:#ffc4df;top:-60px;right:8%}
+  .b2{width:220px;height:220px;background:#cfc0ff;bottom:-100px;left:5%}
+
+  .card{
+    width:min(92vw,610px); min-height:590px; padding:34px 30px 28px;
+    border-radius:36px; background:rgba(255,255,255,.84);
+    border:2px solid rgba(255,255,255,.95);
+    box-shadow:0 25px 80px rgba(100,70,120,.18);
+    backdrop-filter:blur(14px); text-align:center; position:relative; z-index:3;
+  }
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .tag{background:#fff0f7;color:#d45d91;padding:8px 13px;border-radius:99px;font-size:12px;font-weight:800}
+  .progress{height:8px;background:#eee7f2;border-radius:99px;flex:1;margin-left:12px;overflow:hidden}
+  .bar{height:100%;width:20%;background:linear-gradient(90deg,#ff91bd,#b99af5);border-radius:99px;transition:width .4s}
+
+  .icon{font-size:64px;animation:float 2.3s ease-in-out infinite}
+  @keyframes float{50%{transform:translateY(-8px) rotate(3deg)}}
+  h1{font-size:clamp(29px,7vw,46px);margin:10px 0;color:#d45f95}
+  h2{font-size:clamp(23px,5vw,32px);color:#7958a1;margin:18px 0 12px}
+  p{font-size:17px;line-height:1.55;max-width:470px;margin:10px auto}
+  .sub{font-size:14px;opacity:.65}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:13px;max-width:500px;margin:25px auto}
+  button{
+    border:0;border-radius:20px;padding:16px 13px;background:#fff;
+    box-shadow:0 7px 20px rgba(110,75,120,.10);border:2px solid #f0e6f2;
+    color:#624d67;font:inherit;font-weight:800;cursor:pointer;transition:.2s;
+  }
+  button:hover{transform:translateY(-3px) scale(1.02);border-color:#ffb4d1;background:#fff8fb}
+  .selected{background:#ffe4ef!important;border-color:#ff8fba!important}
+  .next{
+    background:linear-gradient(135deg,#ff8fba,#b99af5);color:#fff;
+    padding:15px 30px;border:0;box-shadow:0 10px 25px rgba(213,110,164,.25)
+  }
+  .next:hover{transform:scale(1.05)}
+  .hidden{display:none}
+  .finalIcon{font-size:82px;margin-top:10px}
+  .certificate{
+    margin:22px auto;padding:22px;border:2px dashed #e6a8c7;border-radius:24px;
+    background:linear-gradient(135deg,#fff7fb,#faf6ff)
+  }
+  .certificate strong{font-size:24px;color:#d45d91}
+  .stamp{display:inline-block;margin-top:12px;padding:7px 13px;border-radius:99px;background:#eadfff;color:#7657a0;font-weight:800;font-size:12px}
+  .tiny{font-size:12px;opacity:.55;margin-top:20px}
+  .heart{position:fixed;bottom:-30px;z-index:1;animation:rise linear forwards;pointer-events:none;opacity:.65}
+  @keyframes rise{to{transform:translateY(-110vh) rotate(360deg);opacity:0}}
+  .spark{position:fixed;pointer-events:none;z-index:10;animation:fall 2.6s linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(700deg);opacity:0}}
+  @media(max-width:500px){
+    .card{min-height:600px;padding:27px 18px}
+    .options{grid-template-columns:1fr}
+    .icon{font-size:55px}
+  }
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+
+<main class="card" id="card">
+  <div class="top">
+    <span class="tag" id="step">1 / 10</span>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  </div>
+
+  <section id="screen"></section>
+</main>
+
+<script>
+const questions = [
+  {
+    icon:"🌷", title:"hey",
+    text:"answer these for me real quick. don't overthink it.",
+    options:["okay","what is this","uh oh","fine"]
+  },
+  {
+    icon:"🧸", title:"be fr",
+    text:"how much of my nonsense do you actually deal with?",
+    options:["too much","more than i should","i'm used to it","i have regrets"]
+  },
+  {
+    icon:"🌸", title:"honestly",
+    text:"do you still laugh at my jokes even when they suck?",
+    options:["yes","unfortunately","sometimes","i fake it"]
+  },
+  {
+    icon:"💌", title:"curious",
+    text:"if i called you my little menace would you get mad?",
+    options:["no","i'd like it","maybe","depends"]
+  },
+  {
+    icon:"✨", title:"just checking",
+    text:"you know i think you're fine right?",
+    options:["i know","kinda","maybe","stop"]
+  },
+  {
+    icon:"🎀", title:"random",
+    text:"would it be weird if i said i only really want one person rn?",
+    options:["no","a little","depends who","who"]
+  },
+  {
+    icon:"🌙", title:"late thought",
+    text:"do you ever just think about me for no reason?",
+    options:["maybe","yeah","not telling","all the time"]
+  },
+  {
+    icon:"🍓", title:"hypothetical",
+    text:"if i pulled up with snacks and no plans would you let me stay?",
+    options:["yes","depends on the snacks","please","no (lying)"]
+  },
+  {
+    icon:"🧸", title:"real quick",
+    text:"you know i like you more than i say right?",
+    options:["i know","i figured","say it again","okay…"]
+  },
+  {
+    icon:"💗", title:"last one",
+    text:"so do you wanna be my fine shyt?",
+    options:["yes","hell yes","fine","make me"]
+  }
+];
+
+let current=0;
+let answers=[];
+
+function render(){
+  const q=questions[current];
+  document.getElementById("step").textContent=`${current+1} / ${questions.length}`;
+  document.getElementById("bar").style.width=((current+1)/questions.length*100)+"%";
+  document.getElementById("screen").innerHTML=`
+    <div class="icon">${q.icon}</div>
+    <h2>${q.title}</h2>
+    <p>${q.text}</p>
+    <div class="options">
+      ${q.options.map((x,i)=>`<button onclick="choose(${i})">${x}</button>`).join("")}
+    </div>
+    <p class="sub">pick one</p>
+    <div id="nextArea"></div>
+    <div class="tiny"></div>
+  `;
+}
+
+function choose(i){
+  answers[current]=questions[current].options[i];
+  document.querySelectorAll(".options button").forEach((b,n)=>b.classList.toggle("selected",n===i));
+  document.getElementById("nextArea").innerHTML=
+    `<button class="next" onclick="next()">next</button>`;
+}
+
+function next(){
+  if(current < questions.length-1){ current++; render(); }
+  else showFinal();
+}
+
+function showFinal(){
+  document.getElementById("step").textContent="DONE";
+  document.getElementById("bar").style.width="100%";
+  const answerList = answers.map((a,i)=>`<div style="margin:6px 0;font-size:15px"><strong>${i+1}.</strong> ${a}</div>`).join("");
+  const answersText = answers.map((a,i)=>`${i+1}. ${a}`).join("\n");
+  const certText = `🎀
+
+i accept.
+i'm your fine shyt.
+no take backs.
+💕
+
+——— my answers ———
+${answersText}`;
+
+  document.getElementById("screen").innerHTML=`
+    <div class="finalIcon">💐💗✨</div>
+    <h1>okay.</h1>
+    <p>you said yes. that's all i needed.</p>
+    <div class="certificate">
+      <strong>locked in</strong><br>
+      <span class="stamp">official 💕</span>
+      <p style="margin-top:14px">you're now</p>
+      <h2 style="margin:8px 0">my fine shyt</h2>
+      <p class="sub">no take backs</p>
+    </div>
+
+    <div style="margin:22px auto;max-width:420px;padding:18px;border-radius:18px;background:#fff;border:2px dashed #e6a8c7;text-align:center">
+      <p style="margin:0 0 12px;font-weight:800;color:#d45d91;font-size:14px">copy this and send it to me</p>
+      <pre id="certBox" style="margin:0;white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.55;color:#59465e;background:#fff7fb;padding:14px;border-radius:14px;text-align:left">${certText}</pre>
+      <button class="next" style="margin-top:14px;padding:12px 22px;font-size:15px" onclick="copyCert()">copy & send me</button>
+      <p id="copiedMsg" style="margin:10px 0 0;font-size:13px;color:#d45d91;opacity:0;transition:opacity .3s">copied — now paste it to me</p>
+    </div>
+
+    <div style="margin:20px auto;max-width:420px;text-align:left;padding:16px 18px;border-radius:18px;background:#fff7fb;border:1px solid #f0d6e4">
+      <p style="margin:0 0 10px;font-weight:800;color:#d45d91;text-align:center">your answers</p>
+      ${answerList}
+    </div>
+    <button class="next" onclick="location.reload()">again</button>
+    <div class="tiny">i already knew btw</div>
+  `;
+  confetti();
+}
+
+function copyCert(){
+  const text = document.getElementById("certBox").innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const msg = document.getElementById("copiedMsg");
+    msg.style.opacity = "1";
+    setTimeout(()=> msg.style.opacity = "0", 2000);
+  });
+}
+
+function confetti(){
+  const things=["💗","💕","🌸","✨","🎀","⭐","💐"];
+  for(let i=0;i<85;i++){
+    const s=document.createElement("div");
+    s.className="spark";
+    s.textContent=things[Math.floor(Math.random()*things.length)];
+    s.style.left=Math.random()*100+"vw";
+    s.style.top="-30px";
+    s.style.animationDelay=Math.random()*.8+"s";
+    s.style.fontSize=(12+Math.random()*18)+"px";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),3500);
+  }
+}
+
+setInterval(()=>{
+  const h=document.createElement("div");
+  h.className="heart";
+  h.textContent=["♡","♥","✦","🌸"][Math.floor(Math.random()*4)];
+  h.style.left=Math.random()*100+"vw";
+  h.style.animationDuration=(5+Math.random()*5)+"s";
+  h.style.fontSize=(16+Math.random()*18)+"px";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),10000);
+},650);
+
+render();
+</script>
+</body>
+</html>
