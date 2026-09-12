@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>watching</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    background: linear-gradient(135deg,#fff7fb,#f9f4ff 50%,#f3fbff);
+    color:#59465e; display:grid; place-items:center; padding:20px;
+  }
+  .card{
+    width:min(92vw,520px); padding:28px 24px;
+    border-radius:28px; background:rgba(255,255,255,.9);
+    border:2px solid rgba(255,255,255,.95);
+    box-shadow:0 20px 60px rgba(100,70,120,.15);
+    text-align:center;
+  }
+  h1{font-size:28px;color:#d45f95;margin:0 0 8px}
+  .status{font-size:14px;opacity:.7;margin-bottom:20px}
+  .progress{height:8px;background:#eee7f2;border-radius:99px;overflow:hidden;margin-bottom:24px}
+  .bar{height:100%;width:0%;background:linear-gradient(90deg,#ff91bd,#b99af5);border-radius:99px;transition:width .4s}
+  .answers{text-align:left;max-height:50vh;overflow-y:auto}
+  .row{
+    padding:12px 14px;margin-bottom:8px;border-radius:14px;
+    background:#fff7fb;border:1px solid #f0d6e4;font-size:15px;
+  }
+  .row strong{color:#d45d91}
+  .empty{opacity:.5;padding:30px 0}
+  .live{display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%;margin-right:6px;animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  button{
+    margin-top:18px;border:0;border-radius:16px;padding:12px 22px;
+    background:linear-gradient(135deg,#ff8fba,#b99af5);color:#fff;
+    font:inherit;font-weight:700;cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>live view</h1>
+  <div class="status"><span class="live"></span> <span id="status">waiting for her...</span></div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div class="answers" id="answers">
+    <div class="empty">nothing yet</div>
+  </div>
+  <button onclick="reset()">reset</button>
+</div>
+
+<script>
+const answersEl = document.getElementById('answers');
+const bar = document.getElementById('bar');
+const statusEl = document.getElementById('status');
+
+function render(data) {
+  const { answers, current, total, done } = data;
+  bar.style.width = ((current / total) * 100) + '%';
+
+  if (done) {
+    statusEl.textContent = 'she finished';
+  } else if (current === 0) {
+    statusEl.textContent = 'waiting for her...';
+  } else {
+    statusEl.textContent = `question ${current} of ${total}`;
+  }
+
+  if (!answers || answers.filter(Boolean).length === 0) {
+    answersEl.innerHTML = '<div class="empty">nothing yet</div>';
+    return;
+  }
+
+  answersEl.innerHTML = answers.map((a, i) => {
+    if (!a) return '';
+    return `<div class="row"><strong>${i + 1}.</strong> ${a}</div>`;
+  }).join('');
+}
+
+const es = new EventSource('/live');
+es.onmessage = (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    render(data);
+  } catch {}
+};
+
+es.onerror = () => {
+  statusEl.textContent = 'reconnecting...';
+};
+
+function reset() {
+  fetch('/reset', { method: 'POST' });
+}
+</script>
+</body>
+</html>
